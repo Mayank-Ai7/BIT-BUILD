@@ -116,3 +116,42 @@ SELECT 2, 4, NOW()
 FROM Ongoing_classes oc
 WHERE oc.subject_id = 2
   AND NOW() BETWEEN oc.marked_at AND oc.marked_at + INTERVAL '1 hour';
+
+
+FOR VIEWING THE ATTENDANCE AS A STUDENT
+  3.
+SELECT 
+    s.subject_name,
+    s.total_classes_held,
+    COUNT(a.attendance_id) AS classes_attended
+FROM Subjects s
+LEFT JOIN Attendance a 
+    ON s.subject_id = a.subject_id AND a.student_id = 1
+GROUP BY s.subject_name, s.total_classes_held
+ORDER BY s.subject_name;
+
+
+
+
+4.
+INSERT INTO Students (name, email, password_hash) VALUES
+('Arin Soni', 'arin@gmail.com', '2twsf4tq2'),
+('Ayush Verma', 'ayush@gmail.com', 'sef321dg'),
+('Mayank Banjare', 'mayank@gmail.com', 'df32f3dd'),
+('Shrijan Patel', 'shrijan@gmail.com', '890sj02j');
+
+5.
+INSERT INTO Teachers (name, email, password_hash) VALUES
+('Ani Thomas', 'ani@gmail.com', 'swf22133r'),
+('Sumita Nair', 'sumita@gmail.com', 'ad32d233r'),
+('Sanjay Sharma', 'sanjay@gmail.com', 'duh8928hs');
+
+6.
+INSERT INTO subjects (subject_id, subject_name, teacher_id, total_classes_held) VALUES
+(1, 'TOC', 1, 0),
+(2, 'Chemistry', 2, 1),
+(3, 'DMS', 3, 1),
+(4, 'AM', 3, 0);
+
+7.
+
