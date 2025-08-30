@@ -14,7 +14,6 @@ CREATE TABLE Teachers (
 CREATE TABLE Students (
     student_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    roll_no VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL
 );
@@ -154,4 +153,28 @@ INSERT INTO subjects (subject_id, subject_name, teacher_id, total_classes_held) 
 (4, 'AM', 3, 0);
 
 7.
+-- GENERATING QR INCREMENTS THE total_classes_held BY 1
+UPDATE Subjects
+SET total_classes_held = total_classes_held + 1
+WHERE subject_id = 1;  -- replace 1 with your subject_id
+
+
+8.
+-- FOR VIEWING THE ATTENDANCE AS A TEACHER
+
+SELECT 
+    s.name AS student_name,
+    COUNT(a.attendance_id) AS total_classes_attended,
+    COALESCE(
+        ROUND((COUNT(a.attendance_id)::decimal / NULLIF(sub.total_classes_held, 0)) * 100, 2), 
+        0
+    ) AS attendance_percentage
+    FROM Students s
+    LEFT JOIN Attendance a 
+    ON s.student_id = a.student_id 
+    AND a.subject_id = 4   -- teacher's subject_id
+    JOIN Subjects sub
+    ON sub.subject_id = 4   -- same subject_id, gives total_classes_held
+    GROUP BY s.student_id, s.name, sub.total_classes_held
+    ORDER BY s.name;
 
