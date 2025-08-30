@@ -27,7 +27,7 @@ from utils.helpers import (
     TEACHER_CREDENTIALS,
     EXPECTED_WIFI,
     # CSV_FILE,
-    SUBJECTS,
+    # SUBJECTS,
     students,
 )
 
@@ -230,7 +230,7 @@ class AttendanceApp(App):
         t.start()
 
     def _scan_qr_thread(self):
-        """Handles QR code scanning and attendance marking in a separate thread"""
+        """Handles QR code scanning and attendance marking in a separate thread, displaying camera window"""
         try:
             # Check WiFi SSID first
             current_ssid = get_wifi_ssid()
@@ -238,72 +238,88 @@ class AttendanceApp(App):
                 self.show_scan_result("Error: Please connect to the correct WiFi network")
                 return
 
-            # Capture and decode QR
             cap = cv2.VideoCapture(0)
             while True:
                 ret, frame = cap.read()
-                if ret:
-                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                    decoded_objects = decode(gray)
-                    
-                    for obj in decoded_objects:
-                        try:
-                            subject_id = int(obj.data.decode('utf-8'))
-                            
-                            # Connect to database
-                            with get_db_connection() as conn:
-                                with conn.cursor() as cur:
-                                    # Check if subject exists in ongoing classes and within time limit
-                                    cur.execute("""
-                                        SELECT subject_id 
-                                        FROM Ongoing_classes 
-                                        WHERE subject_id = %s 
-                                        AND NOW() BETWEEN marked_at AND marked_at + INTERVAL '1 hour'
-                                    """, (subject_id,))
-                                    
-                                    ongoing_class = cur.fetchone()
-                                    
-                                    if not ongoing_class:
-                                        self.show_scan_result("Error: Class not active or time expired")
-                                        cap.release()
-                                        return
+                if not ret:
+                    self.show_scan_result("Error: Unable to access camera")
+                    break
 
-                                    # Check if student already marked attendance in this hour
-                                    cur.execute("""
-                                        SELECT attendance_id 
-                                        FROM Attendance 
-                                        WHERE subject_id = %s 
-                                        AND student_id = %s 
-                                        AND marked_at > NOW() - INTERVAL '1 hour'
-                                    """, (subject_id, self.current_student_id))
-                                    
-                                    if cur.fetchone():
-                                        self.show_scan_result("Error: Attendance already marked for this hour")
-                                        cap.release()
-                                        return
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                decoded_objects = decode(gray)
 
-                                    # Mark attendance
-                                    cur.execute("""
-                                        INSERT INTO Attendance (subject_id, student_id, marked_at)
-                                        VALUES (%s, %s, CURRENT_TIMESTAMP)
-                                    """, (subject_id, self.current_student_id))
-                                    
-                                    conn.commit()
-                                    self.show_scan_result("Attendance marked successfully!")
-                                    
-                        except ValueError:
-                            self.show_scan_result("Error: Invalid QR code")
-                        except Exception as e:
-                            self.show_scan_result(f"Error: {str(e)}")
-                        finally:
-                            cap.release()
-                            return
-                            
+                # Display camera window
+                cv2.imshow("Scan QR Code - Press Q to Quit", frame)
+
+                for obj in decoded_objects:
+                    try:
+                        subject_id = int(obj.data.decode('utf-8'))
+
+                        # Connect to database
+                        with get_db_connection() as conn:
+                            with conn.cursor() as cur:
+                                # Check if subject exists in ongoing classes and within time limit
+                                cur.execute("""
+                                    SELECT subject_id 
+                                    FROM Ongoing_classes 
+                                    WHERE subject_id = %s 
+                                    AND NOW() BETWEEN marked_at AND marked_at + INTERVAL '1 hour'
+                                """, (subject_id,))
+                                ongoing_class = cur.fetchone()
+
+                                if not ongoing_class:
+                                    self.show_scan_result("Error: Class not active or time expired")
+                                    cap.release()
+                                    cv2.destroyAllWindows()
+                                    return
+
+                                # Check if student already marked attendance in this hour
+                                cur.execute("""
+                                    SELECT attendance_id 
+                                    FROM Attendance 
+                                    WHERE subject_id = %s 
+                                    AND student_id = %s 
+                                    AND marked_at > NOW() - INTERVAL '1 hour'
+                                """, (subject_id, self.current_student_id))
+                                if cur.fetchone():
+                                    self.show_scan_result("Error: Attendance already marked for this hour")
+                                    cap.release()
+                                    cv2.destroyAllWindows()
+                                    return
+
+                                # Mark attendance
+                                cur.execute("""
+                                    INSERT INTO Attendance (subject_id, student_id, marked_at)
+                                    VALUES (%s, %s, CURRENT_TIMESTAMP)
+                                """, (subject_id, self.current_student_id))
+                                conn.commit()
+                                self.show_scan_result("Attendance marked successfully!")
+                                cap.release()
+                                cv2.destroyAllWindows()
+                                return
+                    except ValueError:
+                        self.show_scan_result("Error: Invalid QR code")
+                        cap.release()
+                        cv2.destroyAllWindows()
+                        return
+                    except Exception as e:
+                        self.show_scan_result(f"Error: {str(e)}")
+                        cap.release()
+                        cv2.destroyAllWindows()
+                        return
+
+                # Exit on 'q' key
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+
+            cap.release()
+            cv2.destroyAllWindows()
         except Exception as e:
             self.show_scan_result(f"Error: {str(e)}")
         finally:
             if 'cap' in locals():
                 cap.release()
+            cv2.destroyAllWindows()
 
     # Add this method to the AttendanceApp class
     @mainthread

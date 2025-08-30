@@ -58,22 +58,90 @@ class AttendanceViewScreen(Screen):
         self.bg_rect.size = self.size
         self.bg_rect.pos = self.pos
 
+
+    # def populate_from_database(self, attendance_data):
+    #     """
+    #     Create a grid layout showing attendance data from database.
+    #     attendance_data should be a list of tuples (student_name, subject_name, attendance_count)
+    #     """
+    #     self.grid.clear_widgets()
+        
+    #     # Create header
+    #     header_layout = GridLayout(
+    #         cols=3,  # student, subject, count
+    #         size_hint_y=None,
+    #         height=40,
+    #         spacing=(10, 0)
+    #     )
+        
+    #     headers = ["Student", "total_classes_attended", "attendance_percentage"]
+    #     for header in headers:
+    #         header_layout.add_widget(
+    #             Label(
+    #                 text=header,
+    #                 color=(0, 0, 0, 1),
+    #                 font_size='16sp',
+    #                 bold=True
+    #             )
+    #         )
+    #     self.grid.add_widget(header_layout)
+
+    #     # Create rows for attendance data
+    #     current_student = None
+    #     for student_name, total_classes_attended, attendance_percentage in attendance_data:
+    #         row_layout = GridLayout(
+    #             cols=3,
+    #             size_hint_y=None,
+    #             height=35,
+    #             spacing=(10, 0)
+    #         )
+            
+    #         # Add student name
+    #         row_layout.add_widget(
+    #             Label(
+    #                 text=str(student_name),
+    #                 color=(0, 0, 0, 1),
+    #                 font_size='14sp'
+    #             )
+    #         )
+            
+    #         # Add subject name
+    #         row_layout.add_widget(
+    #             Label(
+    #                 text=int(total_classes_attended),
+    #                 color=(0, 0, 0, 1),
+    #                 font_size='14sp'
+    #             )
+    #         )
+            
+    #         # Add attendance count
+    #         row_layout.add_widget(
+    #             Label(
+    #                 text=int(attendance_percentage),
+    #                 color=(0, 0, 0, 1),
+    #                 font_size='14sp'
+    #             )
+    #         )
+            
+    #         self.grid.add_widget(row_layout)
+    #         */
+
     def populate_from_database(self, attendance_data):
         """
         Create a grid layout showing attendance data from database.
-        attendance_data should be a list of tuples (student_name, subject_name, attendance_count)
+        attendance_data should be a list of tuples (student_name, total_classes_attended, attendance_percentage)
         """
         self.grid.clear_widgets()
         
         # Create header
         header_layout = GridLayout(
-            cols=3,  # student, subject, count
+            cols=3,  # student, total_classes_attended, attendance_percentage
             size_hint_y=None,
             height=40,
             spacing=(10, 0)
         )
         
-        headers = ["Student", "total_classes_attended", "attendance_percentage"]
+        headers = ["Student", "Attended", "Percentage"]
         for header in headers:
             header_layout.add_widget(
                 Label(
@@ -86,7 +154,6 @@ class AttendanceViewScreen(Screen):
         self.grid.add_widget(header_layout)
 
         # Create rows for attendance data
-        current_student = None
         for student_name, total_classes_attended, attendance_percentage in attendance_data:
             row_layout = GridLayout(
                 cols=3,
@@ -95,31 +162,8 @@ class AttendanceViewScreen(Screen):
                 spacing=(10, 0)
             )
             
-            # Add student name
-            row_layout.add_widget(
-                Label(
-                    text=str(student_name),
-                    color=(0, 0, 0, 1),
-                    font_size='14sp'
-                )
-            )
-            
-            # Add subject name
-            row_layout.add_widget(
-                Label(
-                    text=int(total_classes_attended),
-                    color=(0, 0, 0, 1),
-                    font_size='14sp'
-                )
-            )
-            
-            # Add attendance count
-            row_layout.add_widget(
-                Label(
-                    text=int(attendance_percentage),
-                    color=(0, 0, 0, 1),
-                    font_size='14sp'
-                )
-            )
+            row_layout.add_widget(Label(text=str(student_name), color=(0, 0, 0, 1), font_size='14sp'))
+            row_layout.add_widget(Label(text=str(total_classes_attended), color=(0, 0, 0, 1), font_size='14sp'))
+            row_layout.add_widget(Label(text=f"{attendance_percentage:.2f}", color=(0, 0, 0, 1), font_size='14sp'))
             
             self.grid.add_widget(row_layout)

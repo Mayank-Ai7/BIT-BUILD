@@ -17,31 +17,31 @@ class StudentAttendanceScreen(Screen):
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-        # --- Background image ---
+        
+        # Background
         with self.canvas.before:
-            self.bg_rect = Rectangle(size=self.size, pos=self.pos, color=(1, 1, 1, 1))
+            self.bg_rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(size=self._update_bg_rect, pos=self._update_bg_rect)
-
-        # --- Main layout ---
-        layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
-
-        # Title label
-        self.title_label = Label(
+        
+        self.container = BoxLayout(orientation="vertical", padding=10, spacing=10)
+        
+        # Title
+        self.title = Label(
             text="Attendance",
-            font_size=20,
             size_hint=(1, 0.1),
-            color=get_color_from_hex("#22223bff")  # optional: color to make text visible on background
+            color=(0, 0, 0, 1),
+            font_size='20sp',
+            bold=True
         )
-        layout.add_widget(self.title_label)
-
-        # Scrollable grid for attendance
+        self.container.add_widget(self.title)
+        
+        # Scrollable content
         self.scroll = ScrollView(size_hint=(1, 0.8))
-        self.grid = GridLayout(cols=2, size_hint_y=None)
+        self.grid = GridLayout(cols=1, size_hint_y=None, spacing=(0, 10))
         self.grid.bind(minimum_height=self.grid.setter('height'))
         self.scroll.add_widget(self.grid)
-        layout.add_widget(self.scroll)
-
+        self.container.add_widget(self.scroll)
+        
         # Back button
         back_btn = Button(
             text="Back",
@@ -52,9 +52,9 @@ class StudentAttendanceScreen(Screen):
             bold=True
         )
         back_btn.bind(on_press=lambda inst: App.get_running_app().go_to_screen("student_dashboard"))
-        layout.add_widget(back_btn)
+        self.container.add_widget(back_btn)
 
-        self.add_widget(layout)
+        self.add_widget(self.container)
 
     def _update_bg_rect(self, *args):
         self.bg_rect.size = self.size
@@ -63,49 +63,47 @@ class StudentAttendanceScreen(Screen):
     def populate_for_student(self, student_name):
         """Get attendance from database and populate grid"""
         self.grid.clear_widgets()
-        self.grid.spacing = (0, 20)
+        
         try:
+            # Get attendance data
             attendance_data = get_student_attendance(student_name)
-            
-            # Add headers
-            subject_header = Label(
-                text="Subject",
-                color=(0, 0, 0, 1),
-                font_size='18sp',
-                bold=True,
-                size_hint_y=None,
-                height=40
-            )
-            count_header = Label(
-                text="Attended",
-                color=(0, 0, 0, 1),
-                font_size='18sp',
-                bold=True,
-                size_hint_y=None,
-                height=40
-            )
-            self.grid.add_widget(subject_header)
-            self.grid.add_widget(count_header)
 
-            # Add attendance data
-            for class_name, count in attendance_data:
-                subject_label = Label(
-                    text=str(class_name),
-                    color=(0, 0, 0, 1),
-                    font_size='16sp',
-                    size_hint_y=None,
-                    height=40
-                )
-                value_label = Label(
-                    text=str(count),
-                    color=(0, 0, 0, 1),
-                    font_size='16sp',
-                    size_hint_y=None,
-                    height=40
-                )
-                self.grid.add_widget(subject_label)
-                self.grid.add_widget(value_label)
+            # Create header
+            header_layout = GridLayout(
+                cols=3,
+                size_hint_y=None,
+                height=40,
+                spacing=(10, 0)
+            )
             
-            self.title_label.text = f"Attendance - {student_name}"
+            headers = ["Subject", "Present", "Percentage"]
+            for header in headers:
+                header_layout.add_widget(
+                    Label(
+                        text=header,
+                        color=(0, 0, 0, 1),
+                        font_size='16sp',
+                        bold=True
+                    )
+                )
+            self.grid.add_widget(header_layout)
+
+            # Create rows for attendance data
+            for subject_name, attended_count, percentage in attendance_data:
+                row_layout = GridLayout(
+                    cols=3,
+                    size_hint_y=None,
+                    height=35,
+                    spacing=(10, 0)
+                )
+                
+                row_layout.add_widget(Label(text=str(subject_name), color=(0, 0, 0, 1), font_size='14sp'))
+                row_layout.add_widget(Label(text=str(attended_count), color=(0, 0, 0, 1), font_size='14sp'))
+                row_layout.add_widget(Label(text=f"{percentage:.2f}%", color=(0, 0, 0, 1), font_size='14sp'))
+                
+                self.grid.add_widget(row_layout)
+
+            self.title.text = f"Attendance - {student_name}"
+
         except Exception as e:
             App.get_running_app().popup("Error", f"Failed to load attendance: {e}")

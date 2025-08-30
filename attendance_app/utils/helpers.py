@@ -53,7 +53,23 @@ def fetch_students_from_db():
 students = fetch_students_from_db()
 print(students)
 
-SUBJECTS = ["DMS", "COA", "TOC", "DBMS", "OOPSJ", "LMP-2", "LOOPSJ", "LCOA", "LDBMS"]
+# SUBJECTS = ["DMS", "COA", "TOC", "DBMS", "OOPSJ", "LMP-2", "LOOPSJ", "LCOA", "LDBMS"]
+
+def fetch_subjects_from_db():
+    """Fetch subjects' subject_id and subject_name from the database."""
+    subjects = None
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT subject_id FROM Ongoing_classes")
+                for subject_id in cur.fetchall():
+                    subjects = subject_id
+    except Exception as e:
+        print(f"Error fetching subjects: {e}")
+    return subjects
+
+subjects = fetch_subjects_from_db()
+print(subjects)
 
 
 def get_wifi_ssid():
@@ -130,20 +146,28 @@ def update_attendance(student_name, subject):
 # attendance view by student 
 def get_student_attendance(student_name):
     """Get attendance summary for a student"""
+    for key,value in students.items():
+        if value[0]==student_name:
+            student_id=value[2]
+            break
     try:
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
                     SELECT 
                         s.subject_name,
-                        s.total_classes_held,
-                        COUNT(a.attendance_id) AS classes_attended
-                        FROM Subjects s
-                        LEFT JOIN Attendance a 
-                        ON s.subject_id = a.subject_id AND a.student_id = 1
-                        GROUP BY s.subject_name, s.total_classes_held
-                        ORDER BY s.subject_name;
-                """, (student_name,))
+                        COUNT(a.attendance_id) AS present,
+                        COALESCE(
+                            ROUND((COUNT(a.attendance_id)::decimal / NULLIF(s.total_classes_held, 0)) * 100, 2),
+                            0
+                        ) AS percentage
+                    FROM Subjects s
+                    LEFT JOIN Attendance a 
+                        ON s.subject_id = a.subject_id 
+                        AND a.student_id = %s
+                    GROUP BY s.subject_name, s.total_classes_held
+                    ORDER BY s.subject_name;
+                """, (student_id,))
                 return cur.fetchall()
     except Exception as e:
         print(f"Error getting attendance: {e}")
@@ -167,12 +191,12 @@ def get_all_attendance():
                         FROM Students s
                         LEFT JOIN Attendance a 
                         ON s.student_id = a.student_id 
-                        AND a.subject_id = 4   -- teacher's subject_id
+                        AND a.subject_id = %s   
                         JOIN Subjects sub
-                        ON sub.subject_id = 4   -- same subject_id, gives total_classes_held
+                        ON sub.subject_id = %s  
                         GROUP BY s.student_id, s.name, sub.total_classes_held
                         ORDER BY s.name;
-                """)
+                """, (subjects,subjects, ))
                 return cur.fetchall()
     except Exception as e:
         print(f"Error getting all attendance: {e}")
