@@ -9,7 +9,7 @@ from kivy.app import App
 from kivy.graphics import Rectangle
 from kivy.utils import get_color_from_hex
 
-from utils.helpers import CSV_FILE
+from utils.helpers import get_student_attendance
 
 class StudentAttendanceScreen(Screen):
     """
@@ -61,34 +61,51 @@ class StudentAttendanceScreen(Screen):
         self.bg_rect.pos = self.pos
 
     def populate_for_student(self, student_name):
-        """Read CSV, find the row and populate subject/value pairs."""
+        """Get attendance from database and populate grid"""
         self.grid.clear_widgets()
         self.grid.spacing = (0, 20)
         try:
-            df = pd.read_csv(CSV_FILE)
-            if student_name not in df["Name"].values:
-                App.get_running_app().popup("Error", "Attendance record not found!")
-                return
-            student_attendance = df[df["Name"] == student_name].drop(columns=["Name"])
-            subjects = list(student_attendance.columns)
-            values = student_attendance.iloc[0].values
-            for s, v in zip(subjects, values):
+            attendance_data = get_student_attendance(student_name)
+            
+            # Add headers
+            subject_header = Label(
+                text="Subject",
+                color=(0, 0, 0, 1),
+                font_size='18sp',
+                bold=True,
+                size_hint_y=None,
+                height=40
+            )
+            count_header = Label(
+                text="Attended",
+                color=(0, 0, 0, 1),
+                font_size='18sp',
+                bold=True,
+                size_hint_y=None,
+                height=40
+            )
+            self.grid.add_widget(subject_header)
+            self.grid.add_widget(count_header)
+
+            # Add attendance data
+            for class_name, count in attendance_data:
                 subject_label = Label(
-                    text=str(s),
-                    color=(0, 0, 0, 1),  # Black color
-                    font_size='16sp',     # Larger font size
+                    text=str(class_name),
+                    color=(0, 0, 0, 1),
+                    font_size='16sp',
                     size_hint_y=None,
-                    height=40             # Fixed height for each row
+                    height=40
                 )
                 value_label = Label(
-                    text=str(v),
-                    color=(0, 0, 0, 1),   # Black color
-                    font_size='16sp',      # Larger font size
+                    text=str(count),
+                    color=(0, 0, 0, 1),
+                    font_size='16sp',
                     size_hint_y=None,
-                    height=40              # Fixed height for each row
+                    height=40
                 )
                 self.grid.add_widget(subject_label)
                 self.grid.add_widget(value_label)
+            
             self.title_label.text = f"Attendance - {student_name}"
         except Exception as e:
             App.get_running_app().popup("Error", f"Failed to load attendance: {e}")

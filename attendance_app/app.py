@@ -14,12 +14,12 @@ from kivy.clock import mainthread
 from kivy.core.window import Window
 
 from utils.helpers import (
-    ensure_attendance_csv,
+    # ensure_attendance_csv,
     get_wifi_ssid,
     update_attendance,
     TEACHER_CREDENTIALS,
     EXPECTED_WIFI,
-    CSV_FILE,
+    # CSV_FILE,
     SUBJECTS,
     students,
 )
@@ -36,7 +36,7 @@ from screens.student_attendance import StudentAttendanceScreen
 
 class AttendanceApp(App):
     def build(self):
-        ensure_attendance_csv()
+        # ensure_attendance_csv()
         Window.size = (450, 700)
 
         self.sm = ScreenManager()
@@ -85,7 +85,7 @@ class AttendanceApp(App):
                 self.popup("Wrong Credentials", "Invalid ID or Password")
 
         elif user_type == "Teacher":
-            for class_id, (stored_id, stored_pass) in TEACHER_CREDENTIALS.items():
+            for class_id, (stored_id, stored_pass, teacher_id) in TEACHER_CREDENTIALS.items():
                 if user_id == stored_id and password == stored_pass:
                     self.current_class_id = class_id
                     self.popup("Login Success", f"Welcome, {user_id}!")
@@ -179,17 +179,31 @@ class AttendanceApp(App):
             self.popup("Error", "Invalid QR Code")
 
     # ---------------- screens to show attendance ----------------
-    def show_teacher_attendance_screen(self):
-        try:
-            df = pd.read_csv(CSV_FILE)
-            self.attendance_view_screen.populate_from_csv(df)
-            self.go_to_screen("attendance_view")
-        except Exception as e:
-            self.popup("Error", f"Failed to load attendance: {e}")
-
     def show_student_attendance_screen(self):
+        """Display attendance screen for currently logged in student"""
         if not self.student_name:
             self.popup("Error", "No student logged in")
             return
-        self.student_attendance_screen.populate_for_student(self.student_name)
-        self.go_to_screen("student_attendance")
+
+        try:
+            # populate_for_student now uses database queries instead of CSV
+            self.student_attendance_screen.populate_for_student(self.student_name)
+            self.go_to_screen("student_attendance")
+        except Exception as e:
+            self.popup("Error", f"Failed to load attendance data: {e}")
+
+
+    # Add after show_student_attendance_screen method
+    def show_teacher_attendance_screen(self):
+        """Display attendance overview screen for teacher view"""
+        if not self.current_class_id:
+            self.popup("Error", "No teacher logged in")
+            return
+
+        try:
+            from utils.helpers import get_all_attendance
+            attendance_data = get_all_attendance()
+            self.attendance_view_screen.populate_from_database(attendance_data)
+            self.go_to_screen("attendance_view")
+        except Exception as e:
+            self.popup("Error", f"Failed to load attendance data: {e}")
