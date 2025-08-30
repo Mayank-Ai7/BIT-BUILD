@@ -73,7 +73,7 @@ class AttendanceViewScreen(Screen):
             spacing=(10, 0)
         )
         
-        headers = ["Student", "Subject", "Attendance Count"]
+        headers = ["Student", "total_classes_attended", "attendance_percentage"]
         for header in headers:
             header_layout.add_widget(
                 Label(
@@ -87,7 +87,7 @@ class AttendanceViewScreen(Screen):
 
         # Create rows for attendance data
         current_student = None
-        for student_name, subject_name, count in attendance_data:
+        for student_name, total_classes_attended, attendance_percentage in attendance_data:
             row_layout = GridLayout(
                 cols=3,
                 size_hint_y=None,
@@ -107,7 +107,7 @@ class AttendanceViewScreen(Screen):
             # Add subject name
             row_layout.add_widget(
                 Label(
-                    text=str(subject_name),
+                    text=int(total_classes_attended),
                     color=(0, 0, 0, 1),
                     font_size='14sp'
                 )
@@ -116,7 +116,7 @@ class AttendanceViewScreen(Screen):
             # Add attendance count
             row_layout.add_widget(
                 Label(
-                    text=str(count),
+                    text=int(attendance_percentage),
                     color=(0, 0, 0, 1),
                     font_size='14sp'
                 )

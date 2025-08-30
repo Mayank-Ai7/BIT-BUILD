@@ -23,6 +23,7 @@ CREATE TABLE Subjects (
     subject_id SERIAL PRIMARY KEY,
     subject_name VARCHAR(100) NOT NULL,
     teacher_id INT NOT NULL,
+    total_classes_held INI
     FOREIGN KEY (teacher_id) REFERENCES Teachers(teacher_id)
 );
 
@@ -172,9 +173,9 @@ SELECT
     FROM Students s
     LEFT JOIN Attendance a 
     ON s.student_id = a.student_id 
-    AND a.subject_id = 4   -- teacher's subject_id
+    AND a.subject_id = 3   -- teacher's subject_id
     JOIN Subjects sub
-    ON sub.subject_id = 4   -- same subject_id, gives total_classes_held
+    ON sub.subject_id = 3   -- same subject_id, gives total_classes_held
     GROUP BY s.student_id, s.name, sub.total_classes_held
     ORDER BY s.name;
 
