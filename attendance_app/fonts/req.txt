@@ -1,7 +1,0 @@
-pillow
-qrcode
-opencv-python
-pandas
-pyzbar
-psycopg2
-Kivy
