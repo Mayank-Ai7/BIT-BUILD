@@ -32,7 +32,7 @@ class TeacherDashboardScreen(Screen):
         self.qr_image = KivyImage(
             size_hint=(None, None),
             size=(200, 200),
-            pos_hint={"center_x": 0.5, "top": 0.75}
+            pos_hint={"center_x": 0.5, "top": 0.85}
         )
         self.add_widget(self.qr_image)
 
@@ -48,7 +48,7 @@ class TeacherDashboardScreen(Screen):
             bold=True,
             background_normal=""
         )
-        gen_btn.bind(on_press=lambda inst: App.get_running_app().generate_qr_current_class())
+        gen_btn.bind(on_press=lambda inst: App.get_running_app().show_subject_selection())
         self.add_widget(gen_btn)
 
         # --- View Attendance Button ---
