@@ -83,7 +83,6 @@ python attendance_app/main.py
 
 ## 🔮 Future Improvements
 
-* Migrate from CSV to **SQLite/Database** backend.
 * Add **authentication with hashed passwords**.
 * Export attendance reports in **Excel/PDF**.
 * Add **face recognition** alongside QR codes for enhanced security.
