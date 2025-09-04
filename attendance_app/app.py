@@ -234,6 +234,7 @@ class AttendanceApp(App):
         try:
             # Check WiFi SSID first
             current_ssid = get_wifi_ssid()
+            print(current_ssid)
             if current_ssid != EXPECTED_WIFI:
                 self.show_scan_result("Error: Please connect to the correct WiFi network")
                 return
