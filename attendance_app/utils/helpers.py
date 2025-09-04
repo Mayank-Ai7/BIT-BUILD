@@ -33,8 +33,8 @@ def fetch_teachers_from_db():
 
 
 TEACHER_CREDENTIALS = fetch_teachers_from_db()
-print(TEACHER_CREDENTIALS)
-EXPECTED_WIFI = None
+# print(TEACHER_CREDENTIALS)
+EXPECTED_WIFI = "Shivom_5G"
 # CSV_FILE = "attendance.csv"
 
 def fetch_students_from_db():
@@ -51,52 +51,59 @@ def fetch_students_from_db():
     return students
 
 students = fetch_students_from_db()
-print(students)
+# print(students)
 
 # SUBJECTS = ["DMS", "COA", "TOC", "DBMS", "OOPSJ", "LMP-2", "LOOPSJ", "LCOA", "LDBMS"]
 
-def fetch_subjects_from_db():
-    """Fetch subjects' subject_id and subject_name from the database."""
-    subjects = None
+def fetch_subject_id_from_ongoing_classes():
+    """Fetch the single subject_id from Ongoing_classes table."""
+    subject_id = None
     try:
         with get_db_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT subject_id FROM Ongoing_classes")
-                for subject_id in cur.fetchall():
-                    subjects = subject_id
+                cur.execute("SELECT subject_id FROM Ongoing_classes LIMIT 1")
+                result = cur.fetchone()
+                if result:
+                    subject_id = result[0]
     except Exception as e:
-        print(f"Error fetching subjects: {e}")
-    return subjects
+        print(f"Error fetching subject_id: {e}")
+    return subject_id
 
-subjects = fetch_subjects_from_db()
-print(subjects)
+subjects = fetch_subject_id_from_ongoing_classes()
+# print(subjects)
 
 
 def get_wifi_ssid():
     """Get current WiFi SSID on Windows"""
     try:
-        # Run netsh command with encoding specified
-        command = "netsh wlan show interfaces"
-        result = subprocess.run(command, 
-                              capture_output=True, 
-                              text=True, 
-                              shell=True, 
-                              encoding='utf-8')
-        
+        command = ["netsh", "wlan", "show", "interfaces"]
+        result = subprocess.run(command,
+                               capture_output=True,
+                               text=True,
+                               shell=False,
+                               encoding='utf-8')
+
         if result.returncode != 0:
             print(f"Command failed with error: {result.stderr}")
             return None
-            
-        # Look for SSID in output
+
+        # Look for SSID in output (handle possible extra spaces and case sensitivity)
+        ssid_found = False
         for line in result.stdout.split('\n'):
-            if "SSID" in line and "BSSID" not in line:
-                ssid = re.search(r"SSID\s*:\s*(.*)", line)
-                if ssid:
-                    return ssid.group(1).strip()
-                    
-        print("No WiFi connection found")
+            line = line.strip()
+            # Match 'SSID' but not 'BSSID'
+            if re.match(r"^SSID\s*:", line, re.IGNORECASE) and "bssid" not in line.lower():
+                parts = line.split(":", 1)
+                if len(parts) == 2:
+                    ssid = parts[1].strip()
+                    if ssid and ssid.lower() != "ssid":
+                        ssid_found = True
+                        return ssid
+
+        if not ssid_found:
+            print("No WiFi connection found or SSID not available")
         return None
-        
+
     except Exception as e:
         print(f"Error getting WiFi SSID: {str(e)}")
         return None
@@ -177,6 +184,7 @@ def get_student_attendance(student_name):
 # attendance view by teacher 
 def get_all_attendance():
     """Get attendance for all students"""
+    subjects = fetch_subject_id_from_ongoing_classes()
     try:
         with get_db_connection() as conn:
             with conn.cursor() as cur:

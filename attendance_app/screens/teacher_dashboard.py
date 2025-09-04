@@ -43,7 +43,7 @@ class TeacherDashboardScreen(Screen):
             size_hint=(None, None),
             size=(320, 60),
             pos_hint={"center_x": 0.5, "top": 0.55},
-            background_color=get_color_from_hex("#579b7aff"),
+            background_color=get_color_from_hex("#488155ff"),
             color=get_color_from_hex("#ffffffff"),
             bold=True,
             background_normal=""
